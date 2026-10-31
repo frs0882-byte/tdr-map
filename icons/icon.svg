@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- 背景グラデーション（ディズニーネイビー〜コズミックシアン） -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a1226"/>
+      <stop offset="50%" stop-color="#142850"/>
+      <stop offset="100%" stop-color="#0c4a6e"/>
+    </linearGradient>
+
+    <!-- アイコン外枠の光彩 -->
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+
+    <!-- グローブ（手袋）の立体感グラデーション -->
+    <linearGradient id="gloveGrad" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="70%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+
+    <!-- 影用フィルター -->
+    <filter id="dropShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.55"/>
+    </filter>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- アイコン角丸ベース -->
+  <rect width="512" height="512" rx="115" fill="url(#bgGrad)"/>
+  <rect x="6" y="6" width="500" height="500" rx="110" fill="none" stroke="url(#borderGrad)" stroke-width="4" opacity="0.6"/>
+
+  <!-- 背景のキラめき（マジックダスト） -->
+  <g fill="#38bdf8" opacity="0.4" filter="url(#glow)">
+    <circle cx="90" cy="110" r="4"/>
+    <circle cx="420" cy="90" r="5"/>
+    <circle cx="440" cy="400" r="3"/>
+    <circle cx="80" cy="410" r="5"/>
+    <path d="M 400 160 L 404 172 L 416 176 L 404 180 L 400 192 L 396 180 L 384 176 L 396 172 Z" fill="#93c5fd" opacity="0.8"/>
+    <path d="M 120 340 L 123 349 L 132 352 L 123 355 L 120 364 L 117 355 L 108 352 L 117 349 Z" fill="#93c5fd" opacity="0.8"/>
+  </g>
+
+  <!-- ミッキーの白いグローブ（手袋） -->
+  <g filter="url(#dropShadow)" transform="translate(256, 265)">
+    
+    <!-- カフス（手首のふくらみ） -->
+    <path d="M -90 140 C -85 115, -40 105, 0 105 C 40 105, 85 115, 90 140 C 95 165, 40 170, 0 170 C -40 170, -95 165, -90 140 Z" fill="#ffffff" stroke="#1e293b" stroke-width="8" stroke-linejoin="round"/>
+    
+    <!-- カフスの折り返し線 -->
+    <path d="M -80 138 C -40 125, 40 125, 80 138" fill="none" stroke="#cbd5e1" stroke-width="4"/>
+
+    <!-- 手のひら本体 ＆ 4本指 -->
+    <path d="
+      M -75 115
+      C -110 80, -145 0, -135 -45
+      C -130 -70, -100 -75, -85 -50
+      C -75 -35, -55 5, -45 10
+      C -48 -25, -60 -105, -35 -145
+      C -15 -175, 15 -170, 20 -130
+      C 25 -95, 20 -35, 18 -15
+      C 28 -40, 35 -125, 60 -145
+      C 80 -160, 105 -145, 100 -115
+      C 95 -80, 80 -25, 70 0
+      C 80 -20, 105 -85, 130 -85
+      C 150 -85, 160 -60, 145 -35
+      C 125 0, 95 65, 75 115
+      Z
+    " fill="url(#gloveGrad)" stroke="#0f172a" stroke-width="14" stroke-linejoin="round" stroke-linecap="round"/>
+
+    <!-- 手の甲の象徴的な3本の黒ステッチライン -->
+    <g stroke="#0f172a" stroke-width="10" stroke-linecap="round">
+      <!-- 左ステッチ -->
+      <path d="M -30 25 C -35 45, -35 70, -30 85"/>
+      <circle cx="-30" cy="90" r="5" fill="#0f172a"/>
+
+      <!-- 中央ステッチ -->
+      <path d="M 0 15 C 0 45, 0 70, 0 90"/>
+      <circle cx="0" cy="95" r="5" fill="#0f172a"/>
+
+      <!-- 右ステッチ -->
+      <path d="M 30 25 C 35 45, 35 70, 30 85"/>
+      <circle cx="30" cy="90" r="5" fill="#0f172a"/>
+    </g>
+
+  </g>
+</svg>

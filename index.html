@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>TDR業務MAP</title>
+  
+  <!-- PWA & Mobile Web App設定 -->
+  <link rel="manifest" href="manifest.json?v=20261025_11">
+  <meta name="theme-color" content="#0b1120">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TDR業務MAP">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-mickey-earth-180.png">
+  <link rel="apple-touch-icon-precomposed" sizes="180x180" href="icons/icon-mickey-earth-180.png">
+  <link rel="icon" type="image/png" href="icons/icon-mickey-earth-192.png">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- QRCode.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <link rel="stylesheet" href="styles.css?v=20261026_01">
+</head>
+<body>
+  <!-- Google Earth 3D球体 ➔ 東京ディズニーリゾート衛星写真 60fps シームレスズーム動画 -->
+  <div id="splash-screen" class="splash-screen earth-dive-mode">
+    <video
+      id="earth-dive-video"
+      class="earth-dive-video"
+      src="assets/google-earth-tdr.mp4?v=20261031_01"
+      muted
+      playsinline
+      webkit-playsinline
+      autoplay
+      preload="auto"
+    ></video>
+
+    <!-- スキップボタン -->
+    <button id="skip-opening-btn" class="skip-opening-btn" aria-label="アニメーションをスキップ">
+      <span>スキップ</span> <i data-lucide="chevron-right"></i>
+    </button>
+  </div>
+
+  <div id="app-container">
+    
+    <!-- トップヘッダー & ナビゲーション -->
+    <header id="top-header">
+      <div class="header-main">
+        <div class="brand">
+          <div class="brand-icon">
+            <img src="icons/icon-mickey-earth-192.png" alt="TDR業務MAP" class="brand-logo-img">
+          </div>
+          <div class="brand-text">
+            <span class="app-title">TDR業務MAP</span>
+            <span class="app-subtitle" id="header-status-label">TDR全体マップ</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button id="open-sheet-table-btn" class="header-pill-btn sheet-pill" title="スプレッドシート進捗管理表・チェックリスト印刷">
+            <i data-lucide="table-2"></i> <span>管理表</span>
+          </button>
+          <button id="pwa-guide-btn" class="icon-btn pwa-btn" title="スマホのホーム画面にアプリとして追加する手順" aria-label="アプリ化">
+            <i data-lucide="smartphone"></i>
+          </button>
+          <a href="developer.html" target="_blank" class="icon-btn dev-btn" title="デベロッパー専用管理コンソール（エリア・建物・空調機登録）" aria-label="開発管理">
+            <i data-lucide="layers"></i>
+          </a>
+          <button id="qr-toggle-btn" class="icon-btn qr-btn" title="スマホ連携用QRコード" aria-label="QR">
+            <i data-lucide="qr-code"></i>
+          </button>
+          <button id="search-toggle-btn" class="icon-btn" title="施設・部屋・機器を検索" aria-label="検索">
+            <i data-lucide="search"></i>
+          </button>
+          <button id="reset-view-btn" class="icon-btn" title="リゾート全体に戻る" aria-label="全体表示">
+            <i data-lucide="globe"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- 3大業務モード切替タブバー（スマホ画面幅に4等分でピタリと収まるレスポンシブ設計） -->
+      <div id="business-mode-bar" class="business-mode-bar">
+        <button class="biz-mode-tab active" data-mode="all" onclick="switchBusinessMode('all')">
+          <span>🗺️ 標準マップ</span>
+        </button>
+        <button class="biz-mode-tab" data-mode="maint" onclick="switchBusinessMode('maint')">
+          <span>🔧 整備</span> <span class="biz-badge" id="badge-maint-rem">0</span>
+        </button>
+        <button class="biz-mode-tab" data-mode="filter" onclick="switchBusinessMode('filter')">
+          <span>🚿 清掃</span> <span class="biz-badge" id="badge-filter-rem">0</span>
+        </button>
+        <button class="biz-mode-tab" data-mode="repair" onclick="switchBusinessMode('repair')">
+          <span>🚨 修理</span> <span class="biz-badge repair-alert" id="badge-repair-rem">0</span>
+        </button>
+      </div>
+
+      <!-- 業務モード選択時：進捗残数サマリー ＆ マップピン絞り込みバー -->
+      <div id="biz-control-strip" class="biz-control-strip hidden">
+        <div class="biz-strip-left">
+          <span id="biz-strip-title" class="biz-strip-title">🔧 今年度整備</span>
+          <span id="biz-strip-stats" class="biz-strip-stats">残 0 / 0 台</span>
+        </div>
+        <div class="biz-strip-actions">
+          <button class="pin-filter-btn active" id="pin-filter-pending" onclick="setMapPinFilter('pending')">未着手ピン</button>
+          <button class="pin-filter-btn" id="pin-filter-all" onclick="setMapPinFilter('all')">全ピン</button>
+          <button class="pin-filter-btn" id="pin-filter-none" onclick="setMapPinFilter('none')">ピン消去</button>
+          <button class="btn-open-spreadsheet" onclick="openSpreadsheetModal()">
+            <i data-lucide="printer"></i> <span>表・印刷</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 4段階 ドリルダウン パンくずナビゲーション -->
+      <nav id="breadcrumb-bar" aria-label="階層ナビゲーション">
+        <ol class="breadcrumb-list">
+          <li class="breadcrumb-item active" id="bc-tdr" onclick="appDrilldown.goToTDR()">
+            <i data-lucide="globe-2"></i> TDR全体
+          </li>
+          <li class="breadcrumb-item" id="bc-park" style="display: none;">
+            <i data-lucide="chevron-right"></i>
+            <span class="bc-label">パーク</span>
+          </li>
+          <li class="breadcrumb-item" id="bc-area" style="display: none;">
+            <i data-lucide="chevron-right"></i>
+            <span class="bc-label">工区エリア</span>
+          </li>
+          <li class="breadcrumb-item" id="bc-facility" style="display: none;">
+            <i data-lucide="chevron-right"></i>
+            <span class="bc-label">施設名</span>
+          </li>
+        </ol>
+      </nav>
+
+      <!-- 検索パネル（オーバーレイ） -->
+      <div id="search-panel" class="search-panel hidden">
+        <div class="search-input-wrap">
+          <i data-lucide="search" class="search-icon"></i>
+          <input type="text" id="global-search-input" placeholder="施設名・部屋名・空調機名・工具・型番で検索..." autocomplete="off">
+          <button id="search-close-btn" class="search-clear-btn" aria-label="閉じる">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div id="search-results-list" class="search-results-list"></div>
+      </div>
+
+      <!-- スマホ接続用QRコードモーダル -->
+      <div id="qr-modal" class="qr-modal hidden">
+        <div class="qr-modal-content">
+          <div class="qr-modal-header">
+            <h3>📱 スマホで開く</h3>
+            <button id="qr-modal-close" class="icon-btn-sm"><i data-lucide="x"></i></button>
+          </div>
+          <p class="qr-instructions">外出先や現場のスマホカメラでスキャンしてください：</p>
+          <div id="qrcode-box" class="qrcode-box"></div>
+          <a id="qr-url-link" href="#" target="_blank" class="qr-url-text"></a>
+        </div>
+      </div>
+      <!-- PWA ホーム画面追加ガイドモーダル -->
+      <div id="pwa-modal" class="pwa-modal hidden">
+        <div class="pwa-modal-overlay" onclick="closePwaModal()"></div>
+        <div class="pwa-modal-card">
+          <div class="pwa-modal-header">
+            <div class="pwa-header-brand">
+              <img src="icons/icon-mickey-earth-192.png" alt="TDR業務MAP" class="pwa-thumb">
+              <div>
+                <h3>スマホのホーム画面にアプリ化</h3>
+                <span class="pwa-sub">ブラウザ枠が消えて本物のアプリのように全画面起動！</span>
+              </div>
+            </div>
+            <button class="icon-btn-sm" onclick="closePwaModal()"><i data-lucide="x"></i></button>
+          </div>
+
+          <div class="pwa-steps-list">
+            <div class="pwa-step-item">
+              <span class="pwa-step-num">iPhone (Safari)</span>
+              <p>下部の <b>共有ボタン（四角から矢印 [↑]）</b> をタップ ➔ <b>「ホーム画面に追加」</b> を選択</p>
+            </div>
+            <div class="pwa-step-item">
+              <span class="pwa-step-num">Android (Chrome)</span>
+              <p>右上の <b>メニュー（︙）</b> をタップ ➔ <b>「アプリをインストール」</b> または <b>「ホーム画面に追加」</b> を選択</p>
+            </div>
+          </div>
+
+          <button class="btn-primary" onclick="closePwaModal()" style="margin-top:10px;">了解しました</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- メインマップ領域 -->
+    <main id="map-wrap">
+      <div id="map"></div>
+
+      <!-- 操作ガイダンス帯 -->
+      <div id="guidance-chip" class="guidance-chip">
+        <i data-lucide="navigation"></i>
+        <span id="guidance-text">【Step 1】TDL または TDS をタップしてズーム</span>
+      </div>
+
+      <!-- TDR初期表示用：ワンタップ パーク選択ショートカットバー -->
+      <div id="park-quick-selector" class="park-quick-selector">
+        <button class="park-btn tdl-btn" onclick="appDrilldown.selectPark('tdl')">
+          <span class="p-dot tdl-dot"></span> TDL（ランド）
+        </button>
+        <button class="park-btn tds-btn" onclick="appDrilldown.selectPark('tds')">
+          <span class="p-dot tds-dot"></span> TDS（シー）
+        </button>
+      </div>
+
+      <!-- L2/L3用：左下スクロール式 エリア番号リストパネル -->
+      <div id="area-index-panel" class="area-index-panel hidden">
+        <div class="area-index-header" onclick="toggleAreaIndexCollapse()">
+          <span class="area-index-title" id="area-index-title">📍 エリア一覧</span>
+          <button class="area-index-toggle-btn" id="area-index-toggle-btn" aria-label="開閉">▼</button>
+        </div>
+        <div id="area-index-list" class="area-index-list">
+          <!-- JSで「1. エリア名」を動的生成 -->
+        </div>
+      </div>
+
+      <!-- マップレイヤー切り替え（衛星写真 ⇄ 地図） -->
+      <div class="map-layer-selector">
+        <button id="btn-layer-satellite" class="layer-pill active" onclick="switchMapLayer('satellite')">衛星写真</button>
+        <button id="btn-layer-streets" class="layer-pill" onclick="switchMapLayer('streets')">地図</button>
+      </div>
+    </main>
+
+    <!-- 下部シート：整備対象機器 一覧パネル（スマホ最適化） -->
+    <section id="bottom-sheet" class="bottom-sheet collapsed" aria-label="機器詳細シート">
+      <!-- シートハンドル -->
+      <div class="sheet-handle-bar" id="sheet-handle">
+        <div class="sheet-handle-pill"></div>
+      </div>
+
+      <!-- 施設概要ヘッダー -->
+      <div class="sheet-facility-header">
+        <div class="sheet-top-meta">
+          <div class="meta-badges">
+            <span id="fac-park-badge" class="badge park-badge">TDL</span>
+            <span id="fac-area-badge" class="badge area-badge">トゥモロー工区</span>
+            <span id="fac-cat-badge" class="badge cat-badge">アトラクション</span>
+          </div>
+          <button id="sheet-close-btn" class="icon-btn-sm" aria-label="閉じる">
+            <i data-lucide="chevron-down"></i>
+          </button>
+        </div>
+
+        <h2 id="fac-title" class="fac-title">スペースライド ドーム棟</h2>
+        <p id="fac-desc" class="fac-desc">施設概要説明文</p>
+
+        <!-- 作業進捗ステータスバー -->
+        <div class="progress-bar-wrap">
+          <div class="progress-info-row">
+            <span class="progress-label"><i data-lucide="check-circle-2"></i> 作業完了状況</span>
+            <span id="progress-text" class="progress-ratio">0 / 5 台完了</span>
+          </div>
+          <div class="progress-track">
+            <div id="progress-fill" class="progress-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 整備対象機器リスト（ご指定の全項目を表示） -->
+      <div class="sheet-body" id="sheet-body">
+        <div class="list-controls-row">
+          <span class="section-title">整備対象機器一覧</span>
+          <span class="sort-filter-note">※入口名をタップすると位置ピンと写真を確認できます</span>
+        </div>
+
+        <!-- 機器カード一覧（動的生成） -->
+        <div id="equipment-cards-list" class="equipment-cards-list">
+          <!-- JSでここにカードを生成 -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 写真プレビューモーダル（入口ピン・入口名タップ時） -->
+    <div id="photo-modal" class="photo-modal hidden">
+      <div class="photo-modal-overlay" onclick="closePhotoModal()"></div>
+      <div class="photo-modal-card">
+        <div class="photo-modal-header">
+          <div class="photo-header-text">
+            <span class="photo-badge"><i data-lucide="door-open"></i> 入口写真プレビュー</span>
+            <h3 id="photo-modal-title" class="photo-title">北側 避難階段・屋上アクセスハッチ</h3>
+          </div>
+          <button class="icon-btn-sm" onclick="closePhotoModal()"><i data-lucide="x"></i></button>
+        </div>
+
+        <div class="photo-img-wrap">
+          <img id="photo-modal-img" src="" alt="入口写真" loading="lazy">
+        </div>
+
+        <div class="photo-caption-box">
+          <i data-lucide="info"></i>
+          <p id="photo-modal-caption">進入ルートやキー番号の説明</p>
+        </div>
+
+        <div class="photo-modal-actions">
+          <button class="btn-focus-map" onclick="focusEntranceOnMap()"><i data-lucide="map-pin"></i> 地図で位置を確認</button>
+          <button class="btn-close-modal" onclick="closePhotoModal()">閉じる</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 業務選択ランチャーモーダル -->
+    <div id="mode-launcher-modal" class="photo-modal hidden">
+      <div class="photo-modal-overlay" onclick="closeModeLauncher()"></div>
+      <div class="photo-modal-card" style="max-width:460px;">
+        <div class="photo-modal-header">
+          <div class="photo-header-text">
+            <span class="photo-badge"><i data-lucide="briefcase"></i> 業務モード切替</span>
+            <h3 class="photo-title">実施する業務を選択してください</h3>
+          </div>
+          <button class="icon-btn-sm" onclick="closeModeLauncher()"><i data-lucide="x"></i></button>
+        </div>
+        <div class="mode-cards-grid">
+          <div class="mode-select-card" onclick="switchBusinessMode('maint'); closeModeLauncher();">
+            <div class="mode-card-icon" style="background:rgba(37,99,235,0.2); color:#60a5fa;">🔧</div>
+            <div class="mode-card-info">
+              <h4>① 整備業務（年度定期整備 4月〜3月）</h4>
+              <p>今期整備対象の空調機進捗・未着手ピン表示・残数管理表</p>
+              <span class="mode-stat-pill" id="launcher-stat-maint">集計中...</span>
+            </div>
+          </div>
+          <div class="mode-select-card" onclick="switchBusinessMode('filter'); closeModeLauncher();">
+            <div class="mode-card-icon" style="background:rgba(6,182,212,0.2); color:#22d3ee;">🚿</div>
+            <div class="mode-card-info">
+              <h4>② フィルター清掃業務（四半期）</h4>
+              <p>フィルター形状・枚数・脚立/工具備考・OLC提出用チェックリスト印刷</p>
+              <span class="mode-stat-pill" id="launcher-stat-filter">集計中...</span>
+            </div>
+          </div>
+          <div class="mode-select-card" onclick="switchBusinessMode('repair'); closeModeLauncher();">
+            <div class="mode-card-icon" style="background:rgba(244,63,94,0.2); color:#fb7185;">🚨</div>
+            <div class="mode-card-info">
+              <h4>③ 不具合修理業務（OLC依頼案件）</h4>
+              <p>スポット修理依頼のマップ赤ピン表示・部品待ち/完了ステータス管理</p>
+              <span class="mode-stat-pill repair" id="launcher-stat-repair">集計中...</span>
+            </div>
+          </div>
+          <div class="mode-select-card" onclick="switchBusinessMode('all'); closeModeLauncher();">
+            <div class="mode-card-icon" style="background:rgba(148,163,184,0.2); color:#cbd5e1;">🗺️</div>
+            <div class="mode-card-info">
+              <h4>④ 全機器マスターマップ（通常モード）</h4>
+              <p>TDL/TDSの全エリア・建物・担当空調機を階層ごとに探索</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- スプレッドシート進捗管理表 ＆ OLC提出用チェックリスト印刷モーダル -->
+    <div id="spreadsheet-modal" class="spreadsheet-modal hidden">
+      <div class="spreadsheet-container">
+        <!-- 印刷時専用ヘッダー（画面上は非表示、A4印刷・PDF出力時に表示） -->
+        <div class="print-only-header">
+          <div class="print-title-row">
+            <h1 id="print-doc-title">東京ディズニーリゾート 空調設備 作業完了チェックリスト兼エビデンス報告書</h1>
+            <div class="print-sign-boxes">
+              <div class="sign-box"><span>OLC確認印</span></div>
+              <div class="sign-box"><span>現場責任者</span></div>
+              <div class="sign-box"><span>作業担当者</span></div>
+            </div>
+          </div>
+          <div class="print-meta-row">
+            <span id="print-doc-date">出力日: 2026/10/25</span>
+            <span id="print-doc-summary">対象台数: 0台 / 完了: 0台 / 残数: 0台</span>
+          </div>
+        </div>
+
+        <!-- 画面用モーダルヘッダー -->
+        <div class="spreadsheet-header no-print">
+          <div class="sp-title-group">
+            <span class="sp-mode-badge" id="sp-mode-badge">🔧 年度整備業務</span>
+            <h2 id="sp-modal-title">空調機 進捗管理スプレッドシート＆チェックリスト</h2>
+          </div>
+          <div class="sp-header-actions">
+            <button class="sp-btn sp-btn-add hidden" id="sp-btn-add-repair" onclick="promptNewRepairCase()">
+              <i data-lucide="plus-circle"></i> ＋ 新規不具合依頼を追加
+            </button>
+            <button class="sp-btn sp-btn-csv" onclick="exportSpreadsheetCSV()">
+              <i data-lucide="download"></i> CSV出力 (Excel)
+            </button>
+            <button class="sp-btn sp-btn-print" onclick="window.print()">
+              <i data-lucide="printer"></i> チェックリスト印刷 / PDF保存
+            </button>
+            <button class="icon-btn-sm" onclick="closeSpreadsheetModal()" title="閉じる">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 集計KPIバー -->
+        <div class="sp-kpi-bar no-print">
+          <div class="sp-kpi-card">
+            <span class="kpi-label">対象空調機（総数）</span>
+            <strong class="kpi-val" id="sp-kpi-total">0 件</strong>
+          </div>
+          <div class="sp-kpi-card done">
+            <span class="kpi-label">作業完了済</span>
+            <strong class="kpi-val" id="sp-kpi-done">0 件</strong>
+          </div>
+          <div class="sp-kpi-card pending">
+            <span class="kpi-label">残数（未着手・対応中）</span>
+            <strong class="kpi-val" id="sp-kpi-rem">0 件</strong>
+          </div>
+          <div class="sp-kpi-card rate">
+            <span class="kpi-label">完了進捗率</span>
+            <strong class="kpi-val" id="sp-kpi-rate">0%</strong>
+          </div>
+        </div>
+
+        <!-- フィルター・検索バー -->
+        <div class="sp-filter-bar no-print">
+          <select id="sp-filter-mode" onchange="switchBusinessMode(this.value)">
+            <option value="maint">🔧 ① 年度整備業務（4月〜3月）</option>
+            <option value="filter">🚿 ② 四半期フィルター清掃業務</option>
+            <option value="repair">🚨 ③ OLC不具合修理業務</option>
+            <option value="all">🗺️ 全登録空調機マスター一覧</option>
+          </select>
+          <select id="sp-filter-park" onchange="renderSpreadsheetTable()">
+            <option value="all">全パーク (TDL + TDS)</option>
+            <option value="tdl">TDL（ランド）のみ</option>
+            <option value="tds">TDS（シー）のみ</option>
+          </select>
+          <select id="sp-filter-status" onchange="renderSpreadsheetTable()">
+            <option value="all">すべてのステータス</option>
+            <option value="pending">未着手・未完了のみ</option>
+            <option value="done">完了済のみ</option>
+          </select>
+          <input type="text" id="sp-search-input" placeholder="建物名・部屋名・機種・フィルター・工具で絞込..." oninput="renderSpreadsheetTable()">
+        </div>
+
+        <!-- スプレッドシート本体 -->
+        <div class="sp-table-wrap">
+          <table class="sp-table" id="sp-main-table">
+            <thead id="sp-table-head"></thead>
+            <tbody id="sp-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <!-- PWA Service Worker 登録 -->
+  <script>
+    let deferredPrompt = null;
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .then(reg => console.log('PWA ServiceWorker registered:', reg.scope))
+          .catch(err => console.error('PWA ServiceWorker registration failed:', err));
+      });
+    }
+
+    // Android Chromeのインストールプロンプトをキャプチャ
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const pwaBtn = document.getElementById('pwa-guide-btn');
+      if (pwaBtn) {
+        pwaBtn.classList.add('install-ready');
+      }
+    });
+  </script>
+
+  <!-- データとスクリプト -->
+  <script src="data.js?v=20261026_01"></script>
+  <script src="app.js?v=20261026_01"></script>
+
+  <!-- オープニングシネマアニメーション（app.jsのマップ準備後に起動） -->
+  <script src="opening-animation.js?v=20261031_01"></script>
+</body>
+</html>

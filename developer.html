@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>TDR業務MAP - デベロッパー管理コンソール</title>
+
+  <!-- Leaflet CSS & Geoman (強力な地図編集ライブラリ) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.css" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <link rel="stylesheet" href="developer.css?v=20261025_09">
+</head>
+<body>
+  <div id="dev-app">
+    
+    <!-- トップバー -->
+    <header id="dev-header">
+      <div class="dev-header-left">
+        <div class="dev-logo" style="padding:0; overflow:hidden; border:1px solid rgba(56,189,248,0.5);">
+          <img src="icons/icon-192.png?v=20261025_10" alt="TDR業務MAP" style="width:100%; height:100%; object-fit:cover; display:block;">
+        </div>
+        <div class="dev-title-wrap">
+          <h1>TDR業務MAP Developer Console</h1>
+          <span class="sub-badge">階層レイヤー・エリア・空調機マスター編集</span>
+        </div>
+      </div>
+
+      <!-- 4段階 レイヤー切り替えスイッチ -->
+      <div class="layer-switch-bar">
+        <button class="layer-tab active" data-layer="layer-park" onclick="switchActiveLayer('park')">
+          <span class="l-num">L1</span>
+          <span class="l-name">パーク大枠 (TDR)</span>
+          <span class="l-count" id="count-park">2</span>
+        </button>
+        <button class="layer-tab" data-layer="layer-area" onclick="switchActiveLayer('area')">
+          <span class="l-num">L2</span>
+          <span class="l-name">保全工区エリア (Work Areas)</span>
+          <span class="l-count" id="count-area">6</span>
+        </button>
+        <button class="layer-tab" data-layer="layer-facility" onclick="switchActiveLayer('facility')">
+          <span class="l-num">L3</span>
+          <span class="l-name">施設・建物枠 (Facilities)</span>
+          <span class="l-count" id="count-facility">5</span>
+        </button>
+        <button class="layer-tab" data-layer="layer-entrance" onclick="switchActiveLayer('entrance')">
+          <span class="l-num">L4</span>
+          <span class="l-name">空調機マスター・入口ピン (HVAC Units)</span>
+          <span class="l-count" id="count-entrance">13</span>
+        </button>
+      </div>
+
+      <!-- ヘッダー右側アクション -->
+      <div class="dev-header-right">
+        <div id="autosave-status" class="autosave-badge">
+          <i data-lucide="check-circle-2"></i>
+          <span id="autosave-time">自動保存済み</span>
+        </div>
+        <button class="btn-action btn-sync" onclick="saveToLocalStorageAndNotify()" title="ブラウザに即時保存し本番マップに反映">
+          <i data-lucide="zap"></i> 即時保存・本番同期
+        </button>
+        <button class="btn-action btn-export" onclick="exportDataJsModal()" title="data.js コードをコピー">
+          <i data-lucide="code-2"></i> data.js 出力
+        </button>
+        <a href="index.html" target="_blank" class="btn-action btn-preview" title="別タブで本番マップを開く">
+          <i data-lucide="external-link"></i> 本番プレビュー
+        </a>
+      </div>
+    </header>
+
+    <!-- メインコンテンツ（左側サイドバー ＋ 中央地図 ＋ 右側インスペクター） -->
+    <div id="dev-main">
+      
+      <!-- 左側：選択中レイヤーのアイテム一覧パネル -->
+      <aside id="item-sidebar" class="dev-panel">
+        <div class="panel-header">
+          <div class="panel-title-row">
+            <span class="layer-tag" id="current-layer-tag">L2: 保全工区エリア</span>
+            <span class="item-count-label" id="current-layer-item-count">6 件</span>
+          </div>
+          <button class="btn-add-item" onclick="startNewPolygonCreation()">
+            <i data-lucide="plus-circle"></i> 地図上に新規作成
+          </button>
+        </div>
+
+        <div class="filter-box">
+          <i data-lucide="search"></i>
+          <input type="text" id="sidebar-filter-input" placeholder="名前やコードで絞り込み..." oninput="filterItemList()">
+        </div>
+
+        <!-- アイテムカードリスト -->
+        <div id="item-list-container" class="item-list-container">
+          <!-- JSで動的生成 -->
+        </div>
+      </aside>
+
+      <!-- 中央：地図エディタ領域 -->
+      <main id="dev-map-container">
+        <div id="dev-map"></div>
+
+        <!-- ツールチップガイダンス -->
+        <div id="dev-map-hint" class="dev-map-hint">
+          <i data-lucide="info"></i>
+          <span id="dev-hint-text">地図上の色分けポリゴンをクリックすると、右側のパネルで色や情報を編集できます</span>
+        </div>
+
+        <!-- 地図コントロール（衛星写真/地図、全域リセット） -->
+        <div class="dev-map-controls">
+          <button class="ctrl-btn" onclick="map.flyTo([35.6300, 139.8820], 15)" title="TDR全体へ中央寄せ">
+            <i data-lucide="crosshair"></i>
+          </button>
+          <button class="ctrl-btn" id="btn-toggle-basemap" onclick="toggleBaseMap()" title="衛星写真 ⇄ 標準地図">
+            <i data-lucide="map"></i>
+          </button>
+        </div>
+      </main>
+
+      <!-- 右側：選択中アイテムの詳細編集インスペクター -->
+      <aside id="inspector-sidebar" class="dev-panel">
+        <div class="panel-header">
+          <span class="inspector-title"><i data-lucide="edit-3"></i> プロパティ設定</span>
+          <button class="btn-delete-selected" id="btn-delete-item" onclick="deleteSelectedItem()" disabled>
+            <i data-lucide="trash-2"></i> 削除
+          </button>
+        </div>
+
+        <div id="inspector-body" class="inspector-body empty-state">
+          <div class="empty-message">
+            <i data-lucide="mouse-pointer-click"></i>
+            <p>左のリスト または 地図上の枠をクリックして編集対象を選択してください</p>
+          </div>
+
+          <!-- 編集フォーム（選択時に表示） -->
+          <form id="edit-form" class="edit-form hidden" onsubmit="event.preventDefault(); applyFormChanges();">
+            <div class="form-group">
+              <label>所属親レイヤー</label>
+              <select id="edit-parent-select">
+                <!-- 動的生成 -->
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>名称（日本語）</label>
+              <input type="text" id="edit-name" required>
+            </div>
+
+            <div class="form-group">
+              <label>管理コード / ID</label>
+              <input type="text" id="edit-code" required>
+            </div>
+
+            <div class="form-group" id="group-category">
+              <label>施設カテゴリ</label>
+              <select id="edit-category">
+                <option value="アトラクション">アトラクション</option>
+                <option value="バックヤード事務所">バックヤード事務所</option>
+                <option value="基幹プラント">基幹プラント・エネルギー</option>
+                <option value="飲食・厨房施設">飲食・厨房施設</option>
+                <option value="屋外小型基地・ワゴン">屋外小型基地・ワゴン</option>
+                <option value="倉庫・その他">倉庫・その他</option>
+              </select>
+            </div>
+
+            <!-- L1〜L3用：色分け＆ポリゴン設定 -->
+            <div id="polygon-style-fields">
+              <div class="form-group">
+                <label>色分けカラー設定</label>
+                <div class="color-picker-grid">
+                  <div class="color-input-wrap">
+                    <input type="color" id="edit-color" oninput="syncColorInput(this.value)">
+                    <span id="edit-color-hex" class="hex-text">#3b82f6</span>
+                  </div>
+                  <!-- プリセットパレット -->
+                  <div class="preset-colors">
+                    <span class="palette-chip" style="background:#2563eb;" onclick="setPresetColor('#2563eb')"></span>
+                    <span class="palette-chip" style="background:#0284c7;" onclick="setPresetColor('#0284c7')"></span>
+                    <span class="palette-chip" style="background:#06b6d4;" onclick="setPresetColor('#06b6d4')"></span>
+                    <span class="palette-chip" style="background:#10b981;" onclick="setPresetColor('#10b981')"></span>
+                    <span class="palette-chip" style="background:#f59e0b;" onclick="setPresetColor('#f59e0b')"></span>
+                    <span class="palette-chip" style="background:#ef4444;" onclick="setPresetColor('#ef4444')"></span>
+                    <span class="palette-chip" style="background:#8b5cf6;" onclick="setPresetColor('#8b5cf6')"></span>
+                    <span class="palette-chip" style="background:#ec4899;" onclick="setPresetColor('#ec4899')"></span>
+                    <span class="palette-chip" style="background:#64748b;" onclick="setPresetColor('#64748b')"></span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>塗りつぶし透明度: <span id="opacity-val">25%</span></label>
+                <input type="range" id="edit-opacity" min="5" max="80" value="25" oninput="updateOpacityDisplay(this.value)">
+              </div>
+
+              <div class="form-group">
+                <label>概要・説明・メモ</label>
+                <textarea id="edit-desc" rows="3"></textarea>
+              </div>
+
+              <!-- 地図ポリゴン頂点数 -->
+              <div class="polygon-meta-box">
+                <span class="poly-info"><i data-lucide="pentagon"></i> 頂点数: <strong id="poly-point-count">0</strong> 点</span>
+                <button type="button" class="btn-micro" onclick="startVertexEditMode()" id="btn-edit-vertices">
+                  <i data-lucide="move"></i> 頂点をドラッグ編集
+                </button>
+              </div>
+
+              <!-- L3建物選択時：この建物に空調機を追加するショートカット -->
+              <div id="facility-add-eq-box" style="margin-top:10px; display:none;">
+                <button type="button" class="btn-add-item" style="width:100%; background:#0284c7;" onclick="addEquipmentToSelectedFacility()">
+                  <i data-lucide="plus-circle"></i> ＋ この建物に空調機 (L4) を登録
+                </button>
+              </div>
+            </div>
+
+            <!-- L4専用：空調機マスター＆3大業務（整備・フィルター清掃・不具合修理）設定フォーム -->
+            <div id="equipment-detail-fields" style="display:none; flex-direction:column; gap:12px;">
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                <div class="form-group">
+                  <label>設置階 (Floor)</label>
+                  <input type="text" id="eq-floor" placeholder="例: 1F, 2F, B1F, 屋上">
+                </div>
+                <div class="form-group">
+                  <label>対象台数</label>
+                  <input type="number" id="eq-count" min="1" value="1">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>機械の種類・機種区分 (HVAC Type)</label>
+                <input type="text" id="eq-hvac-type" placeholder="例: 天井カセット4方向 / AHU / チラー / PAC室外機">
+              </div>
+
+              <div class="form-group">
+                <label>搬入・入室ルート入口名称</label>
+                <input type="text" id="eq-entrance-name" placeholder="例: 西側キャスト通用口 / 北側搬入扉">
+              </div>
+
+              <div style="display:grid; grid-template-columns: auto 1fr; gap:8px; align-items:center;">
+                <label style="font-size:12px; display:flex; align-items:center; gap:6px; cursor:pointer; color:#fca5a5;">
+                  <input type="checkbox" id="eq-security-key"> 🔑 要開錠キー
+                </label>
+                <input type="text" id="eq-security-note" placeholder="鍵番号・借受場所 (例: 防災センターK-104)">
+              </div>
+
+              <div class="form-group">
+                <label>入口・現地写真URL (任意)</label>
+                <input type="text" id="eq-photo-url" placeholder="https://... または data:image/...">
+              </div>
+
+              <div class="form-group">
+                <label>共通備考（脚立・工具・注意事項など）</label>
+                <textarea id="eq-notes" rows="2" placeholder="例: 6尺脚立必要、トルクスT20、閉園後作業"></textarea>
+              </div>
+
+              <!-- ① 年度整備業務セクション -->
+              <div style="background:rgba(37,99,235,0.12); border:1px solid rgba(59,130,246,0.4); border-radius:8px; padding:10px; display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <strong style="font-size:12px; color:#60a5fa;">🔧 ① 年度整備業務 (4月〜3月)</strong>
+                  <label style="font-size:11.5px; display:flex; align-items:center; gap:4px; cursor:pointer;">
+                    <input type="checkbox" id="eq-maint-target" checked> 今期対象
+                  </label>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                  <select id="eq-maint-status" style="font-size:12px; padding:5px; border-radius:6px; background:#0f172a; color:#fff; border:1px solid #334155;">
+                    <option value="pending">未着手</option>
+                    <option value="done">整備完了</option>
+                  </select>
+                  <input type="text" id="eq-maint-period" placeholder="2026年度" style="font-size:12px;">
+                </div>
+                <input type="text" id="eq-maint-note" placeholder="整備内容メモ (部品交換・試運転など)" style="font-size:12px;">
+              </div>
+
+              <!-- ② 四半期フィルター清掃セクション -->
+              <div style="background:rgba(6,182,212,0.12); border:1px solid rgba(6,182,212,0.4); border-radius:8px; padding:10px; display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <strong style="font-size:12px; color:#22d3ee;">🚿 ② 四半期フィルター清掃</strong>
+                  <label style="font-size:11.5px; display:flex; align-items:center; gap:4px; cursor:pointer;">
+                    <input type="checkbox" id="eq-filter-target" checked> 清掃対象
+                  </label>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                  <select id="eq-filter-status" style="font-size:12px; padding:5px; border-radius:6px; background:#0f172a; color:#fff; border:1px solid #334155;">
+                    <option value="pending">未清掃（未回収）</option>
+                    <option value="done">清掃・取付完了</option>
+                  </select>
+                  <input type="text" id="eq-filter-quarter" placeholder="第3四半期(10-12月)" style="font-size:12px;">
+                </div>
+                <input type="text" id="eq-filter-spec" placeholder="フィルター形状・寸法・枚数 (例: 595×595×50 × 4枚)" style="font-size:12px;">
+                <input type="text" id="eq-filter-tool" placeholder="回収用の脚立・必要工具 (例: 6尺脚立・+ドライバー)" style="font-size:12px;">
+              </div>
+
+              <!-- ③ OLC不具合修理セクション -->
+              <div style="background:rgba(244,63,94,0.12); border:1px solid rgba(244,63,94,0.4); border-radius:8px; padding:10px; display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <strong style="font-size:12px; color:#fb7185;">🚨 ③ OLC不具合修理案件</strong>
+                  <label style="font-size:11.5px; display:flex; align-items:center; gap:4px; cursor:pointer;">
+                    <input type="checkbox" id="eq-repair-active"> 不具合発生中
+                  </label>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                  <select id="eq-repair-status" style="font-size:12px; padding:5px; border-radius:6px; background:#0f172a; color:#fff; border:1px solid #334155;">
+                    <option value="pending">未着手（要調査）</option>
+                    <option value="parts_wait">調査済・部品待ち</option>
+                    <option value="done">修理完了</option>
+                  </select>
+                  <input type="text" id="eq-repair-reqno" placeholder="依頼No (OLC-26-...)" style="font-size:12px;">
+                </div>
+                <input type="text" id="eq-repair-symptom" placeholder="不具合症状・OLC依頼内容" style="font-size:12px;">
+                <input type="text" id="eq-repair-action" placeholder="原因・手配部品・処置内容" style="font-size:12px;">
+              </div>
+            </div>
+
+            <button type="button" class="btn-submit-changes" onclick="applyFormChanges()">
+              <i data-lucide="check"></i> 変更を確定
+            </button>
+          </form>
+        </div>
+      </aside>
+
+    </div>
+
+    <!-- data.js コード出力モーダル -->
+    <div id="export-modal" class="dev-modal hidden">
+      <div class="dev-modal-overlay" onclick="closeExportModal()"></div>
+      <div class="dev-modal-card">
+        <div class="dev-modal-header">
+          <h3><i data-lucide="file-code"></i> data.js 更新用コード出力</h3>
+          <button class="icon-btn-sm" onclick="closeExportModal()"><i data-lucide="x"></i></button>
+        </div>
+        <p class="modal-desc">
+          編集した最新の階層データです。下のボタンでコピーし、<code>data.js</code> の内容と丸ごと置き換えてください。
+        </p>
+        <textarea id="export-code-area" readonly></textarea>
+        <div class="dev-modal-actions">
+          <button class="btn-primary" onclick="copyExportCode()"><i data-lucide="copy"></i> クリップボードに丸ごとコピー</button>
+          <button class="btn-secondary" onclick="downloadDataJsFile()"><i data-lucide="download"></i> data.js ファイルとして保存</button>
+          <button class="btn-ghost" onclick="closeExportModal()">閉じる</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 通知トースト -->
+    <div id="dev-toast" class="dev-toast"></div>
+
+  </div>
+
+  <!-- Leaflet JS & Geoman JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.min.js"></script>
+
+  <!-- マスターデータ & デベロッパー用コントローラー -->
+  <script src="data.js?v=20261025_09"></script>
+  <script src="developer.js?v=20261025_09"></script>
+</body>
+</html>

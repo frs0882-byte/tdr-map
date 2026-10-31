@@ -1,0 +1,2402 @@
+/* =========================================================
+   TDR空調保全サテライトマップ - スタイルシート (styles.css)
+   現場スマートフォン利用に特化した高コントラストUI
+   ========================================================= */
+
+:root {
+  --bg-primary: #0b1120;
+  --bg-surface: #131c31;
+  --bg-card: #1e293b;
+  --bg-card-hover: #29384d;
+  
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  
+  --accent-tdl: #2563eb;
+  --accent-tds: #0284c7;
+  --accent-cyan: #06b6d4;
+  --accent-emerald: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+  
+  --status-ok-bg: rgba(16, 185, 129, 0.15);
+  --status-ok-text: #34d399;
+  --status-ok-border: #059669;
+
+  --security-key-bg: rgba(239, 68, 68, 0.18);
+  --security-key-text: #fca5a5;
+  --security-key-border: #dc2626;
+
+  --security-none-bg: rgba(16, 185, 129, 0.12);
+  --security-none-text: #6ee7b7;
+  --security-none-border: #059669;
+
+  --border-color: #2e3e57;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 12px 30px rgba(0, 0, 0, 0.7);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  --header-height: 88px;
+}
+
+/* =========================================================
+   超ハイクオリティ：シネマティック・オープニングアニメーション
+   ========================================================= */
+
+.splash-screen.cinema-mode {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #040714;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.8s;
+}
+
+/* =========================================================
+   Googleアース風：公式比率ミッキー地球 ➔ 途切れない舞浜シームレス・ダイブ
+   ========================================================= */
+
+.splash-screen.earth-dive-mode {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #010309;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.5s;
+}
+
+.splash-screen.earth-dive-mode.fade-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* 60fps Google Earth 3D球体 ➔ TDR衛星写真 シームレスズーム動画 */
+.earth-dive-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  z-index: 1;
+  pointer-events: none;
+  background: #010309;
+}
+
+/* 60fps シームレス・インフィニットズーム Canvas */
+.dive-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* =========================================================
+   公式ミッキーのシルエット黄金比率
+   頭部直径180px（半径90px）
+   耳直径108px（頭の60%、半径54px）
+   耳配置角度54度（鉛直軸から左右に36度）
+   中心間距離104.4px（頭と耳が39.6px美しく重なる）
+   ========================================================= */
+
+.mickey-ears-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.mickey-ear {
+  position: absolute;
+  width: 108px;
+  height: 108px;
+  border-radius: 50%;
+  left: 50%;
+  top: 50%;
+  background: radial-gradient(circle at 45% 45%, rgba(56, 189, 248, 0.95) 0%, rgba(14, 165, 233, 0.75) 50%, rgba(2, 132, 199, 0.35) 80%, rgba(3, 105, 161, 0.1) 100%);
+  border: 2.8px solid #38bdf8;
+  box-shadow: 0 0 25px rgba(56, 189, 248, 0.85), inset 0 0 16px rgba(56, 189, 248, 0.6);
+  transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease, filter 0.8s ease;
+}
+
+/* 左耳（dx: -61.4px, dy: -84.5px） */
+.mickey-ear.ear-left {
+  transform: translate(calc(-50% - 61.4px), calc(-50% - 84.5px));
+}
+
+/* 右耳（dx: +61.4px, dy: -84.5px） */
+.mickey-ear.ear-right {
+  transform: translate(calc(-50% + 61.4px), calc(-50% - 84.5px));
+}
+
+/* ダイブ開始時：耳が青い光波となって外側へ霧散する！ */
+.mickey-ears-overlay.diving .mickey-ear.ear-left {
+  transform: translate(calc(-50% - 240px), calc(-50% - 300px)) scale(3.5);
+  opacity: 0;
+  filter: blur(16px);
+}
+
+.mickey-ears-overlay.diving .mickey-ear.ear-right {
+  transform: translate(calc(-50% + 240px), calc(-50% - 300px)) scale(3.5);
+  opacity: 0;
+  filter: blur(16px);
+}
+
+/* 頭部光彩リング（初期状態の地球フレーム） */
+.mickey-head-ring {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border: 2.8px solid #38bdf8;
+  box-shadow: 0 0 35px rgba(56, 189, 248, 0.9), inset 0 0 18px rgba(56, 189, 248, 0.6);
+  pointer-events: none;
+  z-index: 5;
+  transition: transform 0.8s ease, opacity 0.8s ease, filter 0.8s ease;
+}
+
+.mickey-head-ring.diving {
+  transform: translate(-50%, -50%) scale(2.2);
+  opacity: 0;
+  filter: blur(14px);
+}
+
+/* 着地シネマティック発光オーバーレイ（フワッと光って本番マップへ自然に同期） */
+.landing-glow-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+  opacity: 0;
+  background: radial-gradient(circle at center, rgba(240, 249, 255, 0.96) 0%, rgba(56, 189, 248, 0.8) 35%, rgba(14, 165, 233, 0.4) 65%, rgba(2, 6, 23, 0) 95%);
+  mix-blend-mode: screen;
+  will-change: opacity;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.landing-glow-flash.pulse {
+  opacity: 1;
+}
+
+.landing-glow-flash.fade-out {
+  opacity: 0;
+  transition: opacity 0.55s ease-out;
+}
+
+/* シネマティックHUDラベル */
+.earth-hud-label {
+  position: absolute;
+  bottom: 8%;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  z-index: 15;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.earth-hud-label.fade-out {
+  opacity: 0;
+}
+
+.hud-target-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'JetBrains Mono', 'Inter', monospace;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: #38bdf8;
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+}
+
+.hud-target-row svg {
+  width: 16px;
+  height: 16px;
+  animation: crosshairSpin 4s linear infinite;
+}
+
+@keyframes crosshairSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.hud-coords-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'JetBrains Mono', 'Inter', monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: #94a3b8;
+}
+
+.hud-alt-badge {
+  background: rgba(14, 165, 233, 0.2);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  font-size: 9.5px;
+}
+  gap: 6px;
+  z-index: 15;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.earth-hud-label.fade-out {
+  opacity: 0;
+}
+
+.hud-target-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'JetBrains Mono', 'Inter', monospace;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: #38bdf8;
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+}
+
+.hud-target-row svg {
+  width: 16px;
+  height: 16px;
+  animation: crosshairSpin 4s linear infinite;
+}
+
+@keyframes crosshairSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.hud-coords-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'JetBrains Mono', 'Inter', monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: #94a3b8;
+}
+
+.hud-alt-badge {
+  background: rgba(14, 165, 233, 0.2);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  font-size: 9.5px;
+}
+
+/* スキップボタン */
+.skip-opening-btn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(2, 6, 23, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  transition: all 0.2s;
+}
+
+.skip-opening-btn:hover {
+  background: rgba(14, 165, 233, 0.2);
+  border-color: #38bdf8;
+  color: #fff;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  font-family: 'Inter', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+  user-select: none;
+}
+
+#app-container {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* =========================================================
+   トップヘッダー & パンくずバー
+   ========================================================= */
+
+#top-header {
+  position: relative;
+  z-index: 1000;
+  background: rgba(11, 17, 32, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+}
+
+.header-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.brand-icon {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #1e3a8a, #0284c7);
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  overflow: hidden;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.45);
+}
+
+.brand-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.app-title {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-subtitle {
+  font-size: 10.5px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.header-pill-btn {
+  height: 29px;
+  padding: 0 7px;
+  border-radius: 7px;
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid #10b981;
+  color: #34d399;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.header-pill-btn svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.icon-btn {
+  width: 29px;
+  height: 29px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover, .icon-btn:active {
+  background: var(--bg-card-hover);
+  border-color: #38bdf8;
+}
+
+.icon-btn.qr-btn {
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.icon-btn.pwa-btn {
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.4);
+}
+
+.icon-btn.pwa-btn.install-ready {
+  background: rgba(16, 185, 129, 0.25);
+  border-color: #34d399;
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.6);
+  animation: pwaPulse 1.8s infinite;
+}
+
+@keyframes pwaPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+.icon-btn.pwa-btn:hover {
+  background: rgba(52, 211, 153, 0.15);
+}
+
+/* PWAガイドモーダル */
+.pwa-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.pwa-modal.hidden { display: none; }
+
+.pwa-modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+}
+
+.pwa-modal-card {
+  position: relative;
+  z-index: 10;
+  background: var(--bg-surface);
+  border: 1px solid #38bdf8;
+  border-radius: var(--radius-lg);
+  max-width: 400px;
+  width: 100%;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--shadow-lg);
+}
+
+.pwa-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pwa-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pwa-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.pwa-header-brand h3 {
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.pwa-sub {
+  font-size: 10.5px;
+  color: #38bdf8;
+}
+
+.pwa-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pwa-step-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pwa-step-num {
+  font-size: 11px;
+  font-weight: 800;
+  color: #fbbf24;
+}
+
+.pwa-step-item p {
+  font-size: 12px;
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+
+.icon-btn.dev-btn:hover {
+  background: rgba(167, 139, 250, 0.2);
+  border-color: #a78bfa;
+}
+
+.icon-btn svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* 4段階パンくずリスト */
+#breadcrumb-bar {
+  padding: 5px 14px 7px;
+  background: rgba(19, 28, 49, 0.85);
+  border-top: 1px solid var(--border-subtle);
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+#breadcrumb-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.breadcrumb-list {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  font-size: 11.5px;
+  gap: 4px;
+}
+
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease;
+}
+
+.breadcrumb-item svg {
+  width: 12px;
+  height: 12px;
+  color: var(--text-muted);
+}
+
+.breadcrumb-item.active {
+  color: #38bdf8;
+  font-weight: 700;
+  background: rgba(56, 189, 248, 0.15);
+}
+
+.breadcrumb-item:hover:not(.active) {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* =========================================================
+   マップ領域 & 浮動UI
+   ========================================================= */
+
+#map-wrap {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+  background: #070b14;
+}
+
+/* 操作案内バナー（右上の衛星写真/地図ピルと絶対に被らない左寄せ配置） */
+.guidance-chip {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  transform: none;
+  background: rgba(11, 17, 32, 0.94);
+  border: 1px solid #38bdf8;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+  z-index: 500;
+  pointer-events: none;
+  white-space: nowrap;
+  max-width: calc(100% - 135px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: all 0.25s ease;
+}
+
+.guidance-chip svg {
+  width: 13px;
+  height: 13px;
+  color: #38bdf8;
+  flex-shrink: 0;
+}
+
+/* パーククイック切替（TDL / TDS）- 改行させず1行でコンパクトに表示 */
+.park-quick-selector {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(11, 17, 32, 0.92);
+  padding: 5px 8px;
+  border-radius: var(--radius-full);
+  border: 1px solid #38bdf8;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
+  white-space: nowrap;
+  max-width: calc(100vw - 24px);
+}
+
+.park-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  background: var(--bg-card);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.park-btn:hover, .park-btn:active {
+  background: #334155;
+  transform: scale(1.04);
+}
+
+.p-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tdl-dot { background: #3b82f6; box-shadow: 0 0 6px #3b82f6; }
+.tds-dot { background: #06b6d4; box-shadow: 0 0 6px #06b6d4; }
+
+/* 衛星写真 / 地図 切替ピル */
+.map-layer-selector {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 500;
+  display: flex;
+  background: rgba(11, 17, 32, 0.92);
+  padding: 2px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+}
+
+.layer-pill {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.layer-pill.active {
+  background: #2563eb;
+  color: #fff;
+}
+
+/* =========================================================
+   Leaflet カスタムラベル・マーカー
+   ========================================================= */
+
+.park-label-tooltip {
+  background: rgba(15, 23, 42, 0.9) !important;
+  border: 2px solid #38bdf8 !important;
+  color: #fff !important;
+  font-weight: 800 !important;
+  font-size: 13px !important;
+  border-radius: 8px !important;
+  box-shadow: var(--shadow-md) !important;
+  padding: 6px 12px !important;
+  text-align: center;
+}
+
+.park-label-tooltip::before { display: none !important; }
+
+.area-label-tooltip {
+  background: rgba(11, 17, 32, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  border-radius: 6px !important;
+  padding: 4px 8px !important;
+}
+
+.area-label-tooltip::before { display: none !important; }
+
+.facility-marker-pin {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(11, 17, 32, 0.95);
+  border: 2px solid #38bdf8;
+  color: #fff;
+  padding: 4px 9px;
+  border-radius: var(--radius-full);
+  font-size: 11.5px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.facility-marker-pin:hover, .facility-marker-pin:active {
+  transform: translate(-50%, -50%) scale(1.08);
+  border-color: #60a5fa;
+}
+
+/* 入口ピンマーカー（マップ表示用） */
+.entrance-marker-pin {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #ea580c;
+  border: 2px solid #fff;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 0 16px rgba(234, 88, 12, 0.8);
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  animation: pulsePin 1.5s infinite;
+}
+
+@keyframes pulsePin {
+  0% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.12); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+/* =========================================================
+   下部シート：整備対象機器一覧
+   ========================================================= */
+
+.bottom-sheet {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 900;
+  background: var(--bg-surface);
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+  border-top: 1px solid var(--border-color);
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(0);
+}
+
+.bottom-sheet.collapsed {
+  transform: translateY(105%);
+}
+
+.sheet-handle-bar {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0 4px;
+  cursor: grab;
+}
+
+.sheet-handle-pill {
+  width: 40px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--text-muted);
+}
+
+.sheet-facility-header {
+  padding: 4px 16px 12px;
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(11, 17, 32, 0.4);
+}
+
+.sheet-top-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.meta-badges {
+  display: flex;
+  gap: 6px;
+}
+
+.badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+}
+
+.park-badge {
+  background: rgba(37, 99, 235, 0.25);
+  color: #60a5fa;
+  border: 1px solid rgba(37, 99, 235, 0.5);
+}
+
+.area-badge {
+  background: rgba(148, 163, 184, 0.15);
+  color: #cbd5e1;
+}
+
+.cat-badge {
+  background: rgba(6, 182, 212, 0.15);
+  color: #22d3ee;
+}
+
+.icon-btn-sm {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fac-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 2px;
+}
+
+.fac-desc {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  line-height: 1.35;
+}
+
+/* 進捗バー */
+.progress-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--bg-card);
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.progress-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+
+.progress-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.progress-label svg {
+  width: 13px;
+  height: 13px;
+  color: #10b981;
+}
+
+.progress-ratio {
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.progress-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #06b6d4);
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+
+/* シート本文・機器リスト */
+.sheet-body {
+  overflow-y: auto;
+  padding: 12px 14px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.list-controls-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.sort-filter-note {
+  font-size: 10.5px;
+  color: #38bdf8;
+}
+
+/* =========================================================
+   整備対象機器カード（ご指定の8項目）
+   ========================================================= */
+
+.equipment-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.eq-item-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.eq-item-card.is-completed {
+  background: rgba(16, 185, 129, 0.06);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+/* カード上部：完了チェック ＋ フロア ＋ 部屋名 */
+.eq-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.eq-check-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.eq-checkbox-custom {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 2px solid #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f172a;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.eq-item-card.is-completed .eq-checkbox-custom {
+  background: #10b981;
+  border-color: #10b981;
+  color: #fff;
+}
+
+.eq-checkbox-custom svg {
+  width: 14px;
+  height: 14px;
+  display: none;
+}
+
+.eq-item-card.is-completed .eq-checkbox-custom svg {
+  display: block;
+}
+
+.eq-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.floor-tag {
+  font-size: 11px;
+  font-weight: 800;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+}
+
+.room-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* セキュリティ開錠バッジ */
+.security-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.sec-key {
+  background: var(--security-key-bg);
+  color: var(--security-key-text);
+  border: 1px solid var(--security-key-border);
+}
+
+.sec-none {
+  background: var(--security-none-bg);
+  color: var(--security-none-text);
+  border: 1px solid var(--security-none-border);
+}
+
+/* 空調機情報・台数行 */
+.eq-hvac-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(11, 17, 32, 0.4);
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
+
+.hvac-type-name {
+  font-weight: 600;
+  color: #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.hvac-type-name svg {
+  width: 14px;
+  height: 14px;
+  color: #38bdf8;
+}
+
+.indoor-count-badge {
+  font-weight: 800;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 11.5px;
+}
+
+/* 入口名ボタン（タップでマップ＆写真） */
+.entrance-btn-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(234, 88, 12, 0.12);
+  border: 1px solid rgba(234, 88, 12, 0.35);
+  color: #fdba74;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.entrance-btn-row:hover, .entrance-btn-row:active {
+  background: rgba(234, 88, 12, 0.25);
+  border-color: #ea580c;
+  color: #fff;
+}
+
+.entrance-btn-row svg {
+  width: 14px;
+  height: 14px;
+  color: #fb923c;
+  flex-shrink: 0;
+}
+
+.entrance-action-hint {
+  margin-left: auto;
+  font-size: 10.5px;
+  color: #fb923c;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* 備考欄（脚立・工具） */
+.eq-notes-box {
+  background: rgba(30, 41, 59, 0.5);
+  border-left: 3px solid #38bdf8;
+  padding: 6px 10px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 11.5px;
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+/* =========================================================
+   写真プレビューモーダル
+   ========================================================= */
+
+.photo-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.photo-modal.hidden {
+  display: none;
+}
+
+.photo-modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+}
+
+.photo-modal-card {
+  position: relative;
+  z-index: 10;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  max-width: 440px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  animation: modalPop 0.22s ease-out;
+}
+
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.photo-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.photo-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #fb923c;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.photo-badge svg {
+  width: 13px;
+  height: 13px;
+}
+
+.photo-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.photo-img-wrap {
+  width: 100%;
+  height: 220px;
+  background: #000;
+  overflow: hidden;
+}
+
+.photo-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-caption-box {
+  padding: 12px 16px;
+  background: rgba(11, 17, 32, 0.6);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+.photo-caption-box svg {
+  width: 16px;
+  height: 16px;
+  color: #38bdf8;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.photo-modal-actions {
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px;
+}
+
+.btn-focus-map {
+  flex: 1;
+  background: #ea580c;
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-focus-map svg {
+  width: 15px;
+  height: 15px;
+}
+
+.btn-close-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* =========================================================
+   検索 & QRモーダル
+   ========================================================= */
+
+.search-panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-surface);
+  border-bottom: 2px solid #2563eb;
+  box-shadow: var(--shadow-lg);
+  padding: 12px 16px;
+  z-index: 1100;
+}
+
+.search-panel.hidden { display: none; }
+
+.search-input-wrap {
+  display: flex;
+  align-items: center;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  gap: 8px;
+}
+
+.search-input-wrap input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 13.5px;
+  outline: none;
+}
+
+.search-clear-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.search-results-list {
+  max-height: 260px;
+  overflow-y: auto;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.search-result-item:hover {
+  background: var(--bg-card-hover);
+}
+
+.qr-modal {
+  position: absolute;
+  top: 100%;
+  left: 14px;
+  right: 14px;
+  background: var(--bg-surface);
+  border: 1px solid #38bdf8;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 16px;
+  z-index: 1200;
+}
+
+.qr-modal.hidden { display: none; }
+
+.qr-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.qr-modal-header h3 { font-size: 14px; color: #fff; }
+.qr-instructions { font-size: 11px; color: var(--text-secondary); margin-bottom: 12px; }
+
+.qrcode-box {
+  background: #fff;
+  padding: 10px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+  width: 170px;
+  height: 170px;
+}
+
+.qr-url-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: #38bdf8;
+  text-align: center;
+  word-break: break-all;
+  display: block;
+}
+
+/* =========================================================
+   レスポンシブ（PC/タブレット対応）
+   ========================================================= */
+
+@media (min-width: 768px) {
+  #app-container {
+    flex-direction: row;
+  }
+
+  #top-header {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    width: 390px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+  }
+
+  .bottom-sheet {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    bottom: 14px;
+    left: auto;
+    width: 480px;
+    max-height: calc(100vh - 28px);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    transform: translateX(0);
+  }
+
+  .bottom-sheet.collapsed {
+    transform: translateX(115%);
+  }
+
+  .sheet-handle-bar {
+    display: none;
+  }
+
+  .park-quick-selector {
+    left: 420px;
+    transform: none;
+    top: 14px;
+    bottom: auto;
+  }
+
+  .guidance-chip {
+    left: 420px;
+    transform: none;
+    top: 60px;
+  }
+}
+
+/* =========================================================
+   3大業務モード（①年度整備・②四半期フィルター清掃・③OLC不具合修理）
+   ＆ スプレッドシート進捗管理表・A4チェックリスト印刷スタイル
+   ========================================================= */
+
+.business-mode-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+  padding: 5px 10px;
+  background: rgba(11, 17, 32, 0.96);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.biz-mode-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 5px 4px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Leaflet下部の巨大クレジット帯を1行の極小ダークバーに整形 */
+.leaflet-control-attribution {
+  background: rgba(11, 17, 32, 0.65) !important;
+  color: #64748b !important;
+  font-size: 9px !important;
+  line-height: 1.3 !important;
+  padding: 1px 6px !important;
+  max-width: 100vw;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.leaflet-control-attribution a {
+  color: #94a3b8 !important;
+}
+
+.biz-mode-tab:hover {
+  color: #fff;
+  border-color: #38bdf8;
+}
+
+.biz-mode-tab.active[data-mode="all"] {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+.biz-mode-tab.active[data-mode="maint"] {
+  background: rgba(37, 99, 235, 0.28);
+  border-color: #60a5fa;
+  color: #93c5fd;
+}
+
+.biz-mode-tab.active[data-mode="filter"] {
+  background: rgba(6, 182, 212, 0.25);
+  border-color: #22d3ee;
+  color: #67e8f9;
+}
+
+.biz-mode-tab.active[data-mode="repair"] {
+  background: rgba(244, 63, 94, 0.28);
+  border-color: #fb7185;
+  color: #fda4af;
+}
+
+.biz-badge {
+  background: rgba(245, 158, 11, 0.25);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.biz-badge.repair-alert {
+  background: rgba(244, 63, 94, 0.3);
+  color: #fda4af;
+  border-color: #f43f5e;
+}
+
+.biz-control-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 12px;
+  background: linear-gradient(90deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.98));
+  border-top: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.biz-control-strip.hidden {
+  display: none !important;
+}
+
+.biz-strip-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.biz-strip-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: #38bdf8;
+}
+
+.biz-strip-stats {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.14);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.biz-strip-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow-x: auto;
+}
+
+.pin-filter-btn {
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pin-filter-btn.active {
+  background: rgba(245, 158, 11, 0.22);
+  border-color: #f59e0b;
+  color: #fde68a;
+}
+
+.btn-open-spreadsheet {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  border-radius: 6px;
+  border: 1px solid #10b981;
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-open-spreadsheet svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* マップ上の業務対象空調機ピン */
+.biz-unit-pin-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.94);
+  border: 2px solid #f59e0b;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.65);
+  transform: translate(-50%, -50%);
+}
+
+.biz-unit-pin-wrap.status-done {
+  border-color: #10b981;
+  color: #a7f3d0;
+  opacity: 0.85;
+}
+
+.biz-unit-pin-wrap.status-repair {
+  border-color: #f43f5e;
+  background: rgba(136, 19, 55, 0.92);
+  color: #ffe4e6;
+  animation: repairPulse 1.5s infinite;
+}
+
+@keyframes repairPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7); }
+  50% { box-shadow: 0 0 0 8px rgba(244, 63, 94, 0); }
+}
+
+/* 業務選択ランチャーカード */
+.mode-cards-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.mode-select-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mode-select-card:hover {
+  background: var(--bg-card-hover);
+  border-color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+.mode-card-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.mode-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mode-card-info h4 {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.mode-card-info p {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+.mode-stat-pill {
+  align-self: flex-start;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+}
+
+.mode-stat-pill.repair {
+  background: rgba(244, 63, 94, 0.2);
+  color: #fda4af;
+}
+
+/* スプレッドシート＆チェックリスト印刷モーダル */
+.spreadsheet-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  background: rgba(2, 6, 23, 0.88);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
+.spreadsheet-modal.hidden {
+  display: none !important;
+}
+
+.spreadsheet-container {
+  width: 100%;
+  max-width: 1280px;
+  height: 92vh;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.print-only-header {
+  display: none;
+}
+
+.spreadsheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sp-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sp-mode-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 800;
+  background: rgba(37, 99, 235, 0.25);
+  color: #93c5fd;
+  border: 1px solid #3b82f6;
+}
+
+.sp-title-group h2 {
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.sp-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+}
+
+.sp-btn.hidden {
+  display: none !important;
+}
+
+.sp-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.sp-btn-csv {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: #10b981;
+  color: #6ee7b7;
+}
+
+.sp-btn-print {
+  background: linear-gradient(135deg, #2563eb, #0284c7);
+  border-color: #38bdf8;
+  color: #fff;
+}
+
+.sp-btn-add {
+  background: rgba(244, 63, 94, 0.22);
+  border-color: #f43f5e;
+  color: #fda4af;
+}
+
+.sp-kpi-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding: 10px 16px;
+  background: rgba(15, 23, 42, 0.7);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sp-kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sp-kpi-card.done { border-color: rgba(16, 185, 129, 0.5); }
+.sp-kpi-card.pending { border-color: rgba(245, 158, 11, 0.6); }
+.sp-kpi-card.rate { border-color: rgba(56, 189, 248, 0.5); }
+
+.kpi-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.kpi-val {
+  font-size: 18px;
+  font-weight: 900;
+  color: #fff;
+}
+
+.sp-kpi-card.done .kpi-val { color: #34d399; }
+.sp-kpi-card.pending .kpi-val { color: #fbbf24; }
+.sp-kpi-card.rate .kpi-val { color: #38bdf8; }
+
+.sp-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sp-filter-bar select,
+.sp-filter-bar input {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
+
+.sp-filter-bar input {
+  flex: 1;
+  min-width: 180px;
+}
+
+.sp-table-wrap {
+  flex: 1;
+  overflow: auto;
+  padding: 0;
+}
+
+.sp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  text-align: left;
+}
+
+.sp-table th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #0f172a;
+  color: #94a3b8;
+  font-weight: 800;
+  padding: 9px 10px;
+  border-bottom: 2px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.sp-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: #e2e8f0;
+  vertical-align: middle;
+}
+
+.sp-table tr:hover td {
+  background: rgba(56, 189, 248, 0.06);
+}
+
+.sp-table tr.row-done td {
+  background: rgba(16, 185, 129, 0.06);
+  color: #94a3b8;
+}
+
+.sp-status-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.sp-status-btn.pending {
+  background: rgba(245, 158, 11, 0.18);
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+
+.sp-status-btn.parts_wait {
+  background: rgba(168, 85, 247, 0.2);
+  border-color: #a855f7;
+  color: #d8b4fe;
+}
+
+.sp-status-btn.done {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  color: #34d399;
+}
+
+.sp-jump-btn {
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: #38bdf8;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .sp-kpi-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* =========================================================
+   🖨️ A4印刷・PDF出力専用スタイル（先方提出エビデンス・現場チェックリスト）
+   ========================================================= */
+@media print {
+  body, html, #app-container {
+    position: static !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  #top-header, #map-wrap, #bottom-sheet, #splash-screen, .no-print {
+    display: none !important;
+  }
+
+  .spreadsheet-modal {
+    position: static !important;
+    background: #fff !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+
+  .spreadsheet-container {
+    max-width: 100% !important;
+    height: auto !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+
+  .print-only-header {
+    display: block !important;
+    margin-bottom: 12px;
+    border-bottom: 2px solid #000;
+    padding-bottom: 8px;
+  }
+
+  .print-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .print-title-row h1 {
+    font-size: 16pt;
+    color: #000;
+    margin: 0 0 6px 0;
+  }
+
+  .print-sign-boxes {
+    display: flex;
+    border: 1px solid #000;
+  }
+
+  .sign-box {
+    width: 68px;
+    height: 56px;
+    border-left: 1px solid #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .sign-box:first-child {
+    border-left: none;
+  }
+
+  .sign-box span {
+    font-size: 7.5pt;
+    border-bottom: 1px solid #000;
+    width: 100%;
+    text-align: center;
+    padding: 2px 0;
+  }
+
+  .print-meta-row {
+    display: flex;
+    gap: 24px;
+    font-size: 9.5pt;
+    font-weight: bold;
+    color: #111;
+  }
+
+  .sp-table-wrap {
+    overflow: visible !important;
+  }
+
+  .sp-table {
+    font-size: 8.5pt !important;
+    border: 1px solid #000 !important;
+  }
+
+  .sp-table th, .sp-table td {
+    position: static !important;
+    background: #fff !important;
+    color: #000 !important;
+    border: 1px solid #444 !important;
+    padding: 5px 6px !important;
+  }
+
+  .sp-table th {
+    background: #e2e8f0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .sp-status-btn {
+    border: 1px solid #000 !important;
+    color: #000 !important;
+    background: transparent !important;
+    padding: 1px 6px !important;
+  }
+
+  .sp-jump-btn {
+    display: none !important;
+  }
+}
+
+/* =========================================================
+   エリア中心の番号バッジ ＆ 左下スクロール式エリア番号リスト
+   ========================================================= */
+
+.leaflet-tooltip.area-num-tooltip {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.leaflet-tooltip.area-num-tooltip::before {
+  display: none !important;
+}
+
+.area-num-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(11, 17, 32, 0.92);
+  border: 2.5px solid #38bdf8;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  font-family: 'Inter', sans-serif;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.75);
+  cursor: pointer;
+  user-select: none;
+}
+
+.area-index-panel {
+  position: absolute;
+  bottom: 22px;
+  left: 10px;
+  z-index: 500;
+  width: 210px;
+  max-width: calc(100vw - 74px);
+  background: rgba(11, 17, 32, 0.93);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.75);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.area-index-panel.hidden {
+  display: none !important;
+}
+
+.area-index-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: rgba(30, 41, 59, 0.85);
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+}
+
+.area-index-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: #38bdf8;
+  white-space: nowrap;
+}
+
+.area-index-toggle-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.area-index-list {
+  max-height: 155px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  gap: 3px;
+}
+
+.area-index-panel.collapsed .area-index-list {
+  display: none;
+}
+
+.area-index-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 7px;
+  border-radius: 8px;
+  background: rgba(30, 41, 59, 0.55);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.area-index-item:hover,
+.area-index-item:active {
+  background: rgba(51, 65, 85, 0.85);
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.area-index-item.active {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: #38bdf8;
+}
+
+.area-list-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 900;
+  color: #fff;
+  background: rgba(15, 23, 42, 0.9);
+  border: 2px solid #38bdf8;
+  flex-shrink: 0;
+}
+
+.area-list-name {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
